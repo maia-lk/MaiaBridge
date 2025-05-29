@@ -360,20 +360,21 @@ exports.syncMyPOSStockToShopify = async (req, res) => {
       skippedProducts
     } = await syncExistingProducts(myPOSProducts, existingShopifyProducts);
 
-    const createdProducts = await createNewShopifyProducts(productMap);
+    const { createdProducts, skippedDueToDuplicate } = await createNewShopifyProducts(productMap, existingShopifyProducts);
+
     const endTime = Date.now();
     const durationMs = endTime - startTime;
 
     logAction(`⏱️ Sync process completed in ${durationMs} ms`);
-    return res.status(201).json(
-      {
+    return res.status(201).json({
       status: 1,
-      message: `✅ Sync complete. Created: ${createdProducts.length}, Updated: ${updatedProducts.length}, Skipped: ${skippedProducts.length}`,
+      message: `✅ Sync complete. Created: ${createdProducts.length}, Updated: ${updatedProducts.length}, Skipped: ${skippedProducts.length + skippedDueToDuplicate.length}`,
       created: createdProducts,
       updated: updatedProducts,
-      skipped: skippedProducts,
+      skipped: [...skippedProducts, ...skippedDueToDuplicate],
       durationMs
     });
+    
     
 
   } catch (error) {
@@ -457,10 +458,22 @@ async function syncExistingProducts(myPOSProducts, shopifyStockMap) {
 }
 
 // Create new products on Shopify
-async function createNewShopifyProducts(productMap) {
+async function createNewShopifyProducts(productMap, shopifyStockMap) {
   const createdProducts = [];
+  const skippedDueToDuplicate = [];
 
   for (const product of Array.from(productMap.values())) {
+    const duplicate = product.variants.find(v => {
+      const sku = v.sku?.trim().toLowerCase();
+      return shopifyStockMap.has(sku);
+    });
+
+    if (duplicate) {
+      skippedDueToDuplicate.push({ title: product.title, reason: 'SKU already exists in Shopify' });
+      logAction(`⚠️ Skipped "${product.title}" — duplicate SKU: ${duplicate.sku}`);
+      continue;
+    }
+
     try {
       const newProduct = await createShopifyProduct({
         title: product.title,
@@ -477,8 +490,9 @@ async function createNewShopifyProducts(productMap) {
       logAction(`🆕 Created "${product.title}" with ${product.variants.length} variants`);
     } catch (err) {
       logAction(`❌ Failed to create "${product.title}": ${err.message}`);
+      skippedDueToDuplicate.push({ title: product.title, reason: err.message });
     }
   }
 
-  return createdProducts;
+  return { createdProducts, skippedDueToDuplicate };
 }
