@@ -1,0 +1,23 @@
+{
+  "name": "shopify-products-fetcher",
+  "version": "1.0.0",
+  "description": "A small Node.js project to fetch Shopify products",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "p-limit": "^2.3.0",
+    "shopify-api-node": "^3.13.0"
+  },
+  "engines": {
+    "node": "^20.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

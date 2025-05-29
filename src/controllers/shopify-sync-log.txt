@@ -1,0 +1,111 @@
+[2025-05-29T07:49:04.541Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T07:49:05.432Z] 🚨 Error during sync: existingShopifyProducts.map is not a function
+[2025-05-29T07:51:02.678Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T07:51:03.595Z] 🚨 Error during sync: Cannot read properties of undefined (reading 'length')
+[2025-05-29T07:51:27.759Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T07:51:28.626Z] 🚨 Error during sync: existingShopifyProducts.map is not a function
+[2025-05-29T07:52:10.815Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T07:52:11.692Z] 🚨 Error during sync: existingShopifyProducts.map is not a function
+[2025-05-29T07:56:09.071Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T07:56:09.793Z] 🚨 Error during sync: existingShopifyProducts.map is not a function
+[2025-05-29T07:58:33.892Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T07:58:36.403Z] 🆕 Created new product "nexza" with 3 variant(s).
+[2025-05-29T07:58:37.579Z] 🆕 Created new product "TERIA SKIRT" with 1 variant(s).
+[2025-05-29T08:00:19.796Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:00:20.488Z] ⏩ SKU 000000200 stock (10) already correct, skipped.
+[2025-05-29T08:00:20.488Z] ⏩ SKU 000000201 stock (15) already correct, skipped.
+[2025-05-29T08:00:20.491Z] ⏩ SKU 000000202 stock (20) already correct, skipped.
+[2025-05-29T08:00:20.492Z] ⏩ SKU 000000231 stock (5) already correct, skipped.
+[2025-05-29T08:01:12.009Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:01:12.803Z] ⏩ SKU 000000200 stock (10) already correct, skipped.
+[2025-05-29T08:01:12.804Z] ⏩ SKU 000000201 stock (15) already correct, skipped.
+[2025-05-29T08:01:12.806Z] ⏩ SKU 000000202 stock (20) already correct, skipped.
+[2025-05-29T08:01:12.806Z] ❌ Error updating SKU 000000231: updateShopifyInventory is not defined
+[2025-05-29T08:13:53.817Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:13:54.899Z] ⏩ SKU 000000200 stock (10) already correct, skipped.
+[2025-05-29T08:13:54.899Z] ⏩ SKU 000000201 stock (15) already correct, skipped.
+[2025-05-29T08:13:54.901Z] ⏩ SKU 000000202 stock (20) already correct, skipped.
+[2025-05-29T08:13:55.503Z] ✅ Updated stock for SKU 000000231 from 4 to 5
+[2025-05-29T08:15:16.843Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:15:17.766Z] ⏩ SKU 000000200 stock (10) already correct, skipped.
+[2025-05-29T08:15:17.766Z] ⏩ SKU 000000201 stock (15) already correct, skipped.
+[2025-05-29T08:15:17.768Z] ⏩ SKU 000000202 stock (20) already correct, skipped.
+[2025-05-29T08:15:19.002Z] 🆕 Created new product "TERIA SKIRT" with 1 variant(s).
+[2025-05-29T08:16:28.330Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:16:29.742Z] ✅ Updated stock for SKU 000000200 from 7 to 10
+[2025-05-29T08:16:29.742Z] ⏩ SKU 000000201 stock (15) already correct, skipped.
+[2025-05-29T08:16:30.348Z] ✅ Updated stock for SKU 000000202 from 15 to 20
+[2025-05-29T08:16:30.872Z] ✅ Updated stock for SKU 000000231 from 0 to 5
+[2025-05-29T08:17:10.981Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:17:11.771Z] ⏩ SKU 000000200 stock (10) already correct, skipped.
+[2025-05-29T08:17:11.771Z] ⏩ SKU 000000201 stock (15) already correct, skipped.
+[2025-05-29T08:17:11.774Z] ⏩ SKU 000000202 stock (20) already correct, skipped.
+[2025-05-29T08:17:12.347Z] ✅ Updated stock for SKU 000000231 from 10 to 5
+[2025-05-29T08:56:28.628Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:56:30.594Z] 🛒 Shopify SKUs: 4
+[2025-05-29T08:56:30.595Z] 🏪 MyPOS Products: 4
+[2025-05-29T08:57:28.134Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:57:29.186Z] 🛒 Shopify SKUs: 0
+[2025-05-29T08:57:29.186Z] 🏪 MyPOS Products: 4
+[2025-05-29T08:57:30.399Z] 🆕 Created "nexza" with 3 variants
+[2025-05-29T08:57:35.915Z] 🆕 Created "TERIA SKIRT" with 1 variants
+[2025-05-29T08:58:15.501Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:58:16.168Z] 🛒 Shopify SKUs: 4
+[2025-05-29T08:58:16.169Z] 🏪 MyPOS Products: 4
+[2025-05-29T08:58:50.133Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T08:58:51.079Z] 🛒 Shopify SKUs: 4
+[2025-05-29T08:58:51.080Z] 🏪 MyPOS Products: 4
+[2025-05-29T08:58:51.699Z] ✅ Updated SKU 000000200: 6 ➝ 10
+[2025-05-29T08:58:51.700Z] ✅ Updated SKU 000000201: 7 ➝ 15
+[2025-05-29T09:10:40.482Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:10:41.317Z] 🛒 Shopify SKUs: 0
+[2025-05-29T09:10:41.317Z] 🏪 MyPOS Products: 4
+[2025-05-29T09:10:42.459Z] 🆕 Created "nexza" with 3 variants
+[2025-05-29T09:10:43.591Z] 🆕 Created "TERIA SKIRT" with 1 variants
+[2025-05-29T09:16:06.632Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:16:07.365Z] 🛒 Shopify SKUs: 4
+[2025-05-29T09:16:07.366Z] 🏪 MyPOS Products: 4
+[2025-05-29T09:16:07.880Z] ✅ Updated SKU 000000201: 10 ➝ 15
+[2025-05-29T09:18:03.110Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:18:04.129Z] 🛒 Shopify SKUs: 4
+[2025-05-29T09:18:04.129Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:18:05.281Z] ❌ Failed to create "": Response code 422 (unknown)
+[2025-05-29T09:18:59.264Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:18:59.838Z] 🛒 Shopify SKUs: 4
+[2025-05-29T09:18:59.839Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:19:00.781Z] ❌ Failed to create "": Response code 422 (unknown)
+[2025-05-29T09:19:36.015Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:19:36.610Z] 🛒 Shopify SKUs: 1
+[2025-05-29T09:19:36.610Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:19:38.029Z] 🆕 Created "nexza" with 3 variants
+[2025-05-29T09:19:39.092Z] ❌ Failed to create "": Response code 422 (unknown)
+[2025-05-29T09:21:04.020Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:21:05.169Z] 🛒 Shopify SKUs: 4
+[2025-05-29T09:21:05.170Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:21:06.347Z] 🆕 Created "bro" with 1 variants
+[2025-05-29T09:31:01.511Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:31:02.723Z] 🛒 Shopify SKUs: 5
+[2025-05-29T09:31:02.723Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:31:02.725Z] ⏱️ Sync completed in 1.21 seconds
+[2025-05-29T09:31:02.729Z] 🚨 Sync error: Invalid status code: undefined
+[2025-05-29T09:31:49.194Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:31:50.006Z] 🛒 Shopify SKUs: 5
+[2025-05-29T09:31:50.006Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:34:17.932Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:34:18.759Z] 🛒 Shopify SKUs: 0
+[2025-05-29T09:34:18.759Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:34:20.081Z] 🆕 Created "nexza" with 3 variants
+[2025-05-29T09:34:21.205Z] 🆕 Created "TERIA SKIRT" with 1 variants
+[2025-05-29T09:34:23.368Z] 🆕 Created "bro" with 1 variants
+[2025-05-29T09:34:23.368Z] ⏱️ Sync process completed in 5436 ms
+[2025-05-29T09:46:16.119Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:46:16.920Z] 🛒 Shopify SKUs: 5
+[2025-05-29T09:46:16.920Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:46:16.925Z] ⏱️ Sync process completed in 806 ms
+[2025-05-29T09:51:04.779Z] 🔄 Starting stock sync with Shopify...
+[2025-05-29T09:51:05.567Z] 🛒 Shopify SKUs: 0
+[2025-05-29T09:51:05.568Z] 🏪 MyPOS Products: 5
+[2025-05-29T09:51:06.852Z] 🆕 Created "nexza" with 3 variants
+[2025-05-29T09:51:07.964Z] 🆕 Created "TERIA SKIRT" with 1 variants
+[2025-05-29T09:51:09.021Z] 🆕 Created "bro" with 1 variants
+[2025-05-29T09:51:09.021Z] ⏱️ Sync process completed in 4242 ms

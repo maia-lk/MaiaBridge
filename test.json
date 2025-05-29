@@ -1,0 +1,96 @@
+{
+  "status": 1,
+  "message": "Total stock fetched",
+  "Data": {
+      "LocationCode": "001, 002, 003",
+      "LocationDescription": "SHOP, TDC, WARD PLACE",
+      "Products": [
+    {
+      "StockCode": "000000200",
+      "Stock": 10,
+      "ProductCode": "000000200",
+      "ProductReferenceCode": "",
+      "VariantReferenceCode": null,
+      "ProductDescription": "nexza 6",
+      "DefaultSupplier": null,
+      "MeasurementUnit": null,
+      "CostPrice": 2810,
+      "SellingPrice": 8900,
+      "CaseSize": 0,
+      "WebProductDescription": "",
+      "WebImagePath": "https://example.com/images/anika-dress-black.jpg",
+      "CreatedDate": null,
+      "ModifiedDate": null
+    },
+    {
+      "StockCode": "000000201",
+      "Stock": 15,
+      "ProductCode": "000000201",
+      "ProductReferenceCode": "",
+      "VariantReferenceCode": null,
+      "ProductDescription": "nexza 8",
+      "DefaultSupplier": null,
+      "MeasurementUnit": null,
+      "CostPrice": 2810,
+      "SellingPrice": 8900,
+      "CaseSize": 0,
+      "WebProductDescription": "",
+      "WebImagePath": "https://example.com/images/anika-dress-black.jpg",
+      "CreatedDate": null,
+      "ModifiedDate": null
+    },
+    {
+      "StockCode": "000000202",
+      "Stock": 20,
+      "ProductCode": "000000202",
+      "ProductReferenceCode": "",
+      "VariantReferenceCode": null,
+      "ProductDescription": "nexza 10",
+      "DefaultSupplier": null,
+      "MeasurementUnit": null,
+      "CostPrice": 2810,
+      "SellingPrice": 8900,
+      "CaseSize": 0,
+      "WebProductDescription": "",
+      "WebImagePath": "https://example.com/images/anika-dress-black.jpg",
+      "CreatedDate": null,
+      "ModifiedDate": null
+    },
+    {
+      "StockCode": "000000231",
+      "Stock": 5,
+      "ProductCode": "000000231",
+      "ProductReferenceCode": "",
+      "VariantReferenceCode": null,
+      "ProductDescription": "TERIA SKIRT S",
+      "DefaultSupplier": null,
+      "MeasurementUnit": null,
+      "CostPrice": 1500,
+      "SellingPrice": 5500,
+      "CaseSize": 0,
+      "WebProductDescription": "",
+      "WebImagePath": "https://example.com/images/teria-skirt.jpg",
+      "CreatedDate": null,
+      "ModifiedDate": null
+    },
+    {
+      "StockCode": "000000331",
+      "Stock": 10,
+      "ProductCode": "000000331",
+      "ProductReferenceCode": "",
+      "VariantReferenceCode": null,
+      "ProductDescription": "bro 6",
+      "DefaultSupplier": null,
+      "MeasurementUnit": null,
+      "CostPrice": 1500,
+      "SellingPrice": 5500,
+      "CaseSize": 0,
+      "WebProductDescription": "",
+      "WebImagePath": "https://example.com/images/teria-skirt.jpg",
+      "CreatedDate": null,
+      "ModifiedDate": null
+    }
+  ]
+    }
+  }
+  
