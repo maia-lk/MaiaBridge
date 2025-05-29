@@ -4,33 +4,35 @@ const {
   } = require('../config/shopifyConfig');
 
   async function getExistingShopifySKUs() {
-    const products = await shopify.product.list({
-      limit: 250,
-      autoPage: true,
-      status: 'any' // 👈 important to get all products
-    });
-  
     const skuMap = new Map();
+    let params = { limit: 250, published_status: "any" };
+    let hasNextPage = true;
   
-    for (const product of products) {
-      for (const variant of product.variants || []) {
-        const rawSku = variant.sku;
-        const sku = String(rawSku || '').trim().toLowerCase();
+    while (hasNextPage) {
+      const products = await shopify.product.list(params);
   
-        if (sku) {
-          skuMap.set(sku, {
-            inventory_item_id: variant.inventory_item_id,
-            location_id: SHOPIFY_LOCATION_ID,
-            inventory_quantity: variant.inventory_quantity || 0
-          });
+      for (const product of products) {
+        for (const variant of product.variants || []) {
+          const sku = variant.sku?.toLowerCase();
+          if (sku) {
+            skuMap.set(sku, {
+              inventory_item_id: variant.inventory_item_id,
+              location_id: SHOPIFY_LOCATION_ID,
+              inventory_quantity: variant.inventory_quantity || 0
+            });
+          }
         }
+      }
+  
+      if (products.nextPageParameters) {
+        params = products.nextPageParameters;
+      } else {
+        hasNextPage = false;
       }
     }
   
-    console.log(`✅ Total SKUs fetched from Shopify: ${skuMap.size}`);
     return skuMap;
   }
-  
   
 
 async function createShopifyProduct(product) {
