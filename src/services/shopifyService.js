@@ -3,13 +3,15 @@ const {
     SHOPIFY_LOCATION_ID
   } = require('../config/shopifyConfig');
 
-async function getExistingShopifySKUs() {
+  async function getExistingShopifySKUs() {
     const products = await shopify.product.list({ limit: 250, autoPage: true });
     const skuMap = new Map();
   
     for (const product of products) {
       for (const variant of product.variants || []) {
-        const sku = variant.sku?.toLowerCase();
+        const rawSku = variant.sku;
+        const sku = String(rawSku || '').trim().toLowerCase();
+  
         if (sku) {
           skuMap.set(sku, {
             inventory_item_id: variant.inventory_item_id,
@@ -22,6 +24,7 @@ async function getExistingShopifySKUs() {
   
     return skuMap;
   }
+  
 
 async function createShopifyProduct(product) {
     return shopify.product.create(product);
