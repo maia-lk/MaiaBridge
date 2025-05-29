@@ -4,7 +4,7 @@ const {
   } = require('../config/shopifyConfig');
 
   async function getExistingShopifySKUs() {
-    const products = await shopify.product.list({ limit: 250, autoPage: true });
+    const products = await shopify.product.list({ limit: 2000, autoPage: true });
     const skuMap = new Map();
   
     for (const product of products) {
