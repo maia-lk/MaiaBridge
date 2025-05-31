@@ -11,7 +11,7 @@ const {
 const pLimit = require('p-limit');
 
 
-const CONCURRENCY_LIMIT = 50;
+const CONCURRENCY_LIMIT = 2;
 
 exports.getProducts = async (req, res) => {
   try {
