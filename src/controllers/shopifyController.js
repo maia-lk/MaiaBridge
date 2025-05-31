@@ -482,3 +482,15 @@ async function createNewShopifyProducts(productMap) {
 
   return createdProducts;
 }
+
+/**
+ * Handle POST /comment - log and return the comment from request body
+ */
+exports.getComment = async (req, res) => {
+  const { comment } = req.body;
+  if (!comment) {
+    return res.status(400).json({ status: 0, message: 'Comment is required.' });
+  }
+  console.log('Received comment:', comment);
+  return res.status(200).json({ status: 1, message: 'Comment received.', comment });
+};
