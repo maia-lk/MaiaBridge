@@ -487,10 +487,77 @@ async function createNewShopifyProducts(productMap) {
  * Handle POST /comment - log and return the comment from request body
  */
 exports.getComment = async (req, res) => {
-  const { comment } = req.body;
-  if (!comment) {
+  const { Commentid, Comment, Postid, Date } = req.body;
+
+  if (!Comment) {
     return res.status(400).json({ status: 0, message: 'Comment is required.' });
   }
-  console.log('Received comment:', comment);
-  return res.status(200).json({ status: 1, message: 'Comment received.', comment });
+
+  const shouldReply = true;
+
+  // Load node-fetch and use OpenRouter to get AI reply
+  const fetch = await import('node-fetch');
+
+  // 🔮 Generate AI reply using OpenRouter
+  let replyText = "🏏 Want to test your cricket IQ? Visit: www.mycricq.com"; // default if error
+
+  try {
+    const aiResponse = await fetch.default('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+         Authorization: "Bearer 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",
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://www.mycricq.com',
+        'X-Title': 'My Cric Bot'
+      },
+      body: JSON.stringify({
+       model: "deepseek/deepseek-r1-0528:free",
+        messages: [
+    { "role": "system", "content": "You are a fun and friendly cricket assistant. Reply to the user's comment with a short, sweet, one-line cricket-themed auto-reply. Keep it casual and direct, like chatting with a Sri Lankan cricket fan. Do NOT use multiple lines, '\\n', or words like 'mate', 'bro', 'yaluwa'. Always include the game MyCricQ where users can win RS.10,000. End every reply with: 🏏 Want to test your cricket IQ? Visit: www.mycricq.com Example format: Comment\tAuto-Reply \"how to play?\"\tStart with a bat and a ball — and some patience! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"how to win?\"\tScore runs, take wickets, and stay sharp! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"what to do?\"\tPlay, win, and have fun with cricket! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"yes\"\tLove that spirit! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"sangakkara is legend\"\tNo doubt, pure class on the field! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com" }
+
+,
+          
+          {
+            role: 'user',
+            content: Comment
+          }
+        ]
+      })
+    });
+
+    const aiData = await aiResponse.json();
+    replyText = aiData.choices?.[0]?.message?.content || replyText;
+  } catch (err) {
+    console.error("AI reply failed:", err.message);
+  }
+
+  // 🚀 Send to Make webhook
+  const makePayload = {
+    Commentid,
+    Comment,
+    Postid,
+    Date,
+    should_reply: shouldReply,
+    reply_text: replyText
+  };
+
+  const makeWebhookUrl = 'https://hook.us2.make.com/65a5cn88uc4yrbsqihk1ooip8fqy9wap';
+
+  try {
+    await fetch.default(makeWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(makePayload)
+    });
+  } catch (error) {
+    console.error('Error sending to Make webhook:', error.message);
+  }
+
+  return res.status(200).json({
+    status: 1,
+    message: 'Comment received and reply triggered.',
+    ...makePayload
+  });
 };
+
+

@@ -11,6 +11,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2",
     "p-limit": "^2.3.0",
     "shopify-api-node": "^3.13.0"
   },
