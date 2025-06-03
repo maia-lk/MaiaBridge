@@ -18,7 +18,5 @@ router.post('/create-product', createProduct);
 router.post('/sync-stock', verifyToken, syncMyPOSStockToShopify);
 router.post('/update-stock', verifyToken, updateStockBySKU);
 
-// Add comment route
-router.post('/comment',getComment);
 
 module.exports = router;

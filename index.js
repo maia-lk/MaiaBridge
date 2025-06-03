@@ -1,3 +1,8 @@
+// MaiaBridge Project
+// Copyright (c) 2025 Maia. All rights reserved.
+// This project and its source code are the legal property of Maia.
+// Unauthorized copying or distribution is prohibited.
+
 const express = require('express');
 const dotenv = require('dotenv');
 const shopifRoutes = require('./src/routes/shopifRoutes');

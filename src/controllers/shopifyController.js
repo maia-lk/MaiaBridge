@@ -225,148 +225,32 @@ function logAction(message) {
   console.log(logMsg.trim());
 }
 
-// exports.syncMyPOSStockToShopify = async (req, res) => {
-//   try {
-//     logAction('🔄 Starting stock sync with Shopify...');
-
-//     // STEP 1: Get existing Shopify SKUs and stock data
-//     const [existingShopifyProducts, myPOSProducts] = await Promise.all([
-//       getExistingShopifySKUs(), // Must return array of { sku, inventory_quantity }
-//       getMyPOSStockData()
-//     ]);
-
-//     console.log(`Found ${existingShopifyProducts.size} existing Shopify SKUs.`);
-//     console.log(`Found ${myPOSProducts} MyPOS products to process.`);
-
-//     const shopifyStockMap = new Map();
-    
-//     for (const [sku, details] of existingShopifyProducts.entries()) {
-//       shopifyStockMap.set(sku, details.inventory_quantity);
-//     }
-
-//     const productMap = new Map();
-//     const createdProducts = [];
-//     const updatedProducts = [];
-//     const skippedProducts = [];
-
-//     for (const product of myPOSProducts) {
-//       const fullDesc = product.ProductDescription?.trim();
-//       if (!fullDesc) continue;
-
-//       const parts = fullDesc.split(' ');
-//       const size = parts.pop();
-//       const baseTitle = parts.join(' ').trim();
-//       const sku = product.StockCode?.trim().toLowerCase();
-//       const myPOSStock = Math.max(product.Stock, 0);
-
-//       if (!sku) continue;
-
-//       const existingStock = shopifyStockMap.get(sku);
-
-//       // If SKU exists
-//       if (shopifyStockMap.has(sku)) {
-//         if (existingStock !== myPOSStock) {
-//           // Update stock on Shopify
-//           try {
-//             await updateShopifyInventory(sku, myPOSStock, existingShopifyProducts);
-//             updatedProducts.push({ sku, from: existingStock, to: myPOSStock });
-//             logAction(`✅ Updated stock for SKU ${sku} from ${existingStock} to ${myPOSStock}`);
-//           } catch (err) {
-//             logAction(`❌ Error updating SKU ${sku}: ${err.message}`);
-//           }
-//         } else {
-//           skippedProducts.push({ sku, stock: myPOSStock });
-//           logAction(`⏩ SKU ${sku} stock (${myPOSStock}) already correct, skipped.`);
-//         }
-//         continue;
-//       }
-
-//       // If SKU doesn't exist, prepare to create
-//       if (!productMap.has(baseTitle)) {
-//         productMap.set(baseTitle, {
-//           title: baseTitle,
-//           webDescription: product.WebProductDescription || baseTitle,
-//           webImagePath: product.WebImagePath || '',
-//           variants: []
-//         });
-//       }
-
-//       productMap.get(baseTitle).variants.push({
-//         option1: size || "Default",
-//         price: product.SellingPrice > 0 ? product.SellingPrice.toString() : "0.01",
-//         sku: product.StockCode,
-//         inventory_management: "shopify",
-//         inventory_quantity: myPOSStock,
-//         cost: product.CostPrice > 0 ? product.CostPrice.toString() : undefined
-//       });
-//     }
-
-//     // STEP 3: Create new products
-//     for (const product of Array.from(productMap.values())) {
-//       try {
-//         const newProduct = await createShopifyProduct({
-//           title: product.title,
-//           body_html: buildProductDescription(product.webDescription),
-//           vendor: VENDOR_NAME,
-//           product_type: PRODUCT_TYPE,
-//           options: [{ name: PRODUCT_OPTION_NAME }],
-//           variants: product.variants,
-//           status: PRODUCT_STATUS,
-//           images: product.webImagePath ? [{ src: product.webImagePath }] : undefined
-//         });
-
-//         createdProducts.push(newProduct);
-//         logAction(`🆕 Created new product "${product.title}" with ${product.variants.length} variant(s).`);
-//       } catch (err) {
-//         logAction(`❌ Error creating product "${product.title}": ${err.message}`);
-//       }
-//     }
-
-//     // Final response
-//     return res.status(201).json({
-//       status: 1,
-//       message: `Sync complete. Created: ${createdProducts.length}, Updated: ${updatedProducts.length}, Skipped: ${skippedProducts.length}`,
-//       created: createdProducts,
-//       updated: updatedProducts,
-//       skipped: skippedProducts
-//     });
-
-//   } catch (error) {
-//     logAction(`🚨 Error during sync: ${error.message}`);
-//     return res.status(500).json({
-//       status: 0,
-//       message: 'Failed to sync stock to Shopify.',
-//       error: error.message
-//     });
-//   }
-// };
-
 exports.syncMyPOSStockToShopify = async (req, res) => {
-  const startTime = Date.now(); 
+  const startTime = Date.now();
   try {
     logAction('🔄 Starting stock sync with Shopify...');
 
+    // Fetch existing Shopify SKUs and MyPOS products in parallel
     const [existingShopifyProducts, myPOSProducts] = await Promise.all([
-      getExistingShopifySKUs(), 
+      getExistingShopifySKUs(),
       getMyPOSStockData()
     ]);
 
     logAction(`🛒 Shopify SKUs: ${existingShopifyProducts.size}`);
     logAction(`🏪 MyPOS Products: ${myPOSProducts.length}`);
 
-    const {
-      productMap,
-      updatedProducts,
-      skippedProducts
-    } = await syncExistingProducts(myPOSProducts, existingShopifyProducts);
+    // Sync existing products (update stock or prepare for creation)
+    const syncResult = await syncExistingProducts(myPOSProducts, existingShopifyProducts);
+    const { productMap, updatedProducts, skippedProducts } = syncResult;
 
+    // Create new products on Shopify
     const createdProducts = await createNewShopifyProducts(productMap);
+
     const endTime = Date.now();
     const durationMs = endTime - startTime;
-
     logAction(`⏱️ Sync process completed in ${durationMs} ms`);
-    return res.status(201).json(
-      {
+
+    return res.status(201).json({
       status: 1,
       message: `✅ Sync complete. Created: ${createdProducts.length}, Updated: ${updatedProducts.length}, Skipped: ${skippedProducts.length}`,
       created: createdProducts,
@@ -374,12 +258,9 @@ exports.syncMyPOSStockToShopify = async (req, res) => {
       skipped: skippedProducts,
       durationMs
     });
-    
-
   } catch (error) {
     const endTime = Date.now();
     const durationMs = endTime - startTime;
-
     logAction(`🚨 Sync error: ${error.message}`);
     return res.status(500).json({
       status: 0,
@@ -482,82 +363,3 @@ async function createNewShopifyProducts(productMap) {
 
   return createdProducts;
 }
-
-/**
- * Handle POST /comment - log and return the comment from request body
- */
-exports.getComment = async (req, res) => {
-  const { Commentid, Comment, Postid, Date } = req.body;
-
-  if (!Comment) {
-    return res.status(400).json({ status: 0, message: 'Comment is required.' });
-  }
-
-  const shouldReply = true;
-
-  // Load node-fetch and use OpenRouter to get AI reply
-  const fetch = await import('node-fetch');
-
-  // 🔮 Generate AI reply using OpenRouter
-  let replyText = "🏏 Want to test your cricket IQ? Visit: www.mycricq.com"; // default if error
-
-  try {
-    const aiResponse = await fetch.default('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-         Authorization: "Bearer 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",
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://www.mycricq.com',
-        'X-Title': 'My Cric Bot'
-      },
-      body: JSON.stringify({
-       model: "deepseek/deepseek-r1-0528:free",
-        messages: [
-    { "role": "system", "content": "You are a fun and friendly cricket assistant. Reply to the user's comment with a short, sweet, one-line cricket-themed auto-reply. Keep it casual and direct, like chatting with a Sri Lankan cricket fan. Do NOT use multiple lines, '\\n', or words like 'mate', 'bro', 'yaluwa'. Always include the game MyCricQ where users can win RS.10,000. End every reply with: 🏏 Want to test your cricket IQ? Visit: www.mycricq.com Example format: Comment\tAuto-Reply \"how to play?\"\tStart with a bat and a ball — and some patience! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"how to win?\"\tScore runs, take wickets, and stay sharp! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"what to do?\"\tPlay, win, and have fun with cricket! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"yes\"\tLove that spirit! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com \"sangakkara is legend\"\tNo doubt, pure class on the field! 🏏 Want to test your cricket IQ? Visit: www.mycricq.com" }
-
-,
-          
-          {
-            role: 'user',
-            content: Comment
-          }
-        ]
-      })
-    });
-
-    const aiData = await aiResponse.json();
-    replyText = aiData.choices?.[0]?.message?.content || replyText;
-  } catch (err) {
-    console.error("AI reply failed:", err.message);
-  }
-
-  // 🚀 Send to Make webhook
-  const makePayload = {
-    Commentid,
-    Comment,
-    Postid,
-    Date,
-    should_reply: shouldReply,
-    reply_text: replyText
-  };
-
-  const makeWebhookUrl = 'https://hook.us2.make.com/65a5cn88uc4yrbsqihk1ooip8fqy9wap';
-
-  try {
-    await fetch.default(makeWebhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(makePayload)
-    });
-  } catch (error) {
-    console.error('Error sending to Make webhook:', error.message);
-  }
-
-  return res.status(200).json({
-    status: 1,
-    message: 'Comment received and reply triggered.',
-    ...makePayload
-  });
-};
-
-
