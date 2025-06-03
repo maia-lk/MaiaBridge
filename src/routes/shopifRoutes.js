@@ -15,7 +15,7 @@ router.get('/products', getProducts);
 router.get('/inventory', verifyToken,getInventory);
 router.post('/create-product', createProduct);
 
-router.post('/sync-stock', verifyToken, syncMyPOSStockToShopify);
+router.post('/sync-stock', syncMyPOSStockToShopify);
 router.post('/update-stock', verifyToken, updateStockBySKU);
 
 
