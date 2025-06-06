@@ -1,6 +1,6 @@
 module.exports = {
     VENDOR_NAME: "Maia",
-    PRODUCT_TYPE: "Dress",
+    PRODUCT_TYPE: "",
     PRODUCT_OPTION_NAME: "Size",
     buildProductDescription: (webDescription) => `<strong>${webDescription}</strong>`,
     PRODUCT_STATUS: "draft",
