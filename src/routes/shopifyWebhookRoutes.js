@@ -6,10 +6,12 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  handleOrderCreated
+  handleOrderCreated,
+  handleOrderCancelled
 } = require('../controllers/shopifyWebhookController');
 
 // Order webhooks
 router.post('/order-created', handleOrderCreated);
+router.post('/order-cancelled', handleOrderCancelled);
 
 module.exports = router;

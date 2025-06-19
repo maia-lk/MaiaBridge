@@ -196,3 +196,64 @@ exports.handleOrderCreated = async (req, res) => {
     res.sendStatus(200);
   }
 };
+
+/**
+ * Handle Shopify order cancellation webhook
+ */
+exports.handleOrderCancelled = async (req, res) => {
+  const order = req.body;
+  
+  // Log the incoming webhook payload for debugging
+  logWebhook(`Received Shopify order cancellation webhook: ${JSON.stringify(order, null, 2)}`);
+  
+  try {
+    // Validate that we received a proper order payload
+    if (!order) {
+      logWebhook('❌ Error: No order data in cancellation webhook payload');
+      return res.sendStatus(200); // Still return success to Shopify
+    }
+    
+    // Extract order details
+    const orderNumber = order.order_number || order.name?.replace('#', '') || 'unknown';
+    const customerId = order.customer?.id || 'unknown';
+    const customerName = `${order.customer?.first_name || ''} ${order.customer?.last_name || ''}`.trim() || 'Guest Customer';
+    const customerEmail = order.email || order.customer?.email || 'no-email';
+    
+    // Extract cancellation details
+    const cancelledAt = order.cancelled_at;
+    const cancelReason = order.cancel_reason;
+    const financialStatus = order.financial_status;
+    const fulfillmentStatus = order.fulfillment_status;
+    
+    // Log cancellation details
+    logWebhook(`🚫 Order #${orderNumber} CANCELLED`);
+    logWebhook(`Customer: ${customerName} (${customerEmail})`);
+    logWebhook(`Cancelled at: ${cancelledAt}`);
+    logWebhook(`Cancel reason: ${cancelReason || 'Not specified'}`);
+    logWebhook(`Financial status: ${financialStatus}`);
+    logWebhook(`Fulfillment status: ${fulfillmentStatus}`);
+    
+    // Extract refund information if available
+    if (order.refunds && Array.isArray(order.refunds)) {
+      order.refunds.forEach((refund, index) => {
+        logWebhook(`Refund ${index + 1}: ${refund.amount || 'N/A'} ${order.currency || ''} - ${refund.reason || 'No reason'}`);
+      });
+    }
+    
+    // TODO: Add MyPOS cancellation/refund logic here
+    // This could involve:
+    // 1. Creating a cancellation record in MyPOS
+    // 2. Processing refunds if applicable
+    // 3. Updating inventory if needed
+    
+    logWebhook(`✅ Successfully processed cancellation for order #${orderNumber}`);
+    
+    // Always return 200 to Shopify
+    res.sendStatus(200);
+  } catch (error) {
+    logWebhook(`❌ Error processing order cancellation webhook: ${error.message}`);
+    console.error('Full error:', error);
+    // Still return 200 to Shopify to prevent retries
+    res.sendStatus(200);
+  }
+};
