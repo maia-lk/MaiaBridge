@@ -113,6 +113,8 @@ exports.handleOrderCreated = async (req, res) => {
       shipping_cost: shippingCost
     };
 
+    console.log('Order details:', JSON.stringify(orderDetails, null, 2));
+
     logWebhook(`📦 New order #${orderNumber} received from ${customer.name} (${customer.email})`);
     
     if (shippingAddress) {
