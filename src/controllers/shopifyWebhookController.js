@@ -21,6 +21,9 @@ function logWebhook(message) {
 exports.handleOrderCreated = async (req, res) => {
   const order = req.body;
   
+  // Debug: Log which endpoint was called
+  logWebhook(`🔄 ORDER CREATION webhook called - URL: ${req.originalUrl}`);
+  
   // Log the incoming webhook payload for debugging
   logWebhook(`Received Shopify webhook: ${JSON.stringify(order, null, 2)}`);
   

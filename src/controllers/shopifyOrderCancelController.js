@@ -19,6 +19,10 @@ function logCancellation(message) {
  */
 exports.handleOrderCancelled = async (req, res) => {
   const order = req.body;
+
+  
+  // Debug: Log which endpoint was called
+  logCancellation(`🚫 ORDER CANCELLATION webhook called - URL: ${req.originalUrl}`);
   
   try {
     // Validate that we received a proper order payload
