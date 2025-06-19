@@ -14,6 +14,6 @@ const {
 
 // Order webhooks
 router.post('/order-created', handleOrderCreated);
-router.post('/order-cancelled', handleOrderCancelled);
+router.post('/cancelled', handleOrderCancelled);
 
 module.exports = router;
