@@ -19,6 +19,7 @@ function logWebhook(message) {
  */
 exports.handleOrderCreated = (req, res) => {
   const order = req.body;
+  console.log('Received order webhook:', JSON.stringify(order, null, 2));
   
   try {
     // Extract order details
