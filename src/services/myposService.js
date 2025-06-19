@@ -18,7 +18,9 @@ function logService(message) {
  */
 function convertOrderToInvoice(orderDetails) {
   const orderDate = new Date(orderDetails.created_at);
-  const invoiceNumber = `INV${orderDetails.number.padStart(5, '0')}`;
+  // Generate invoice number based on order number, pad with zeros if needed
+  const orderNumberStr = String(orderDetails.number || '');
+  const invoiceNumber = `INV${orderNumberStr.padStart(5, '0')}`;
   const grossAmount = parseFloat(orderDetails.total_price);
   const shippingCost = parseFloat(orderDetails.shipping_cost || '0.00');
   const netAmount = grossAmount;
