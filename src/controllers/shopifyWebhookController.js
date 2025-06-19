@@ -21,10 +21,17 @@ function logWebhook(message) {
 exports.handleOrderCreated = async (req, res) => {
   const order = req.body;
   
+  
   // Log the incoming webhook payload for debugging
   logWebhook(`Received Shopify webhook: ${JSON.stringify(order, null, 2)}`);
   
   try {
+
+    // Check if the order is canceled
+    if (order.cancelled_at || order.cancel_reason) {
+      logWebhook(`Ignoring cancelled order #${order.order_number || order.name || 'unknown'}`);
+      return res.sendStatus(200); // Skip processing and return success
+    }
     // Validate that we received a proper order payload
     if (!order) {
       logWebhook('❌ Error: No order data in webhook payload');
