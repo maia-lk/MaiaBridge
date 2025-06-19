@@ -19,30 +19,57 @@ function logWebhook(message) {
  */
 exports.handleOrderCreated = (req, res) => {
   const order = req.body;
-  console.log('Received order webhook:', JSON.stringify(order, null, 2));
   
   try {
     // Extract order details
-    const orderId = order.id || order.order_id || 'unknown';
-    const orderNumber = order.order_number || order.name || orderId;
+    const orderNumber = order.order_number || order.name?.replace('#', '') || 'unknown';
     
-    const skus = order.line_items.map(item => ({
-      sku: item.sku,
+    // Extract customer details
+    const customer = {
+      name: `${order.customer?.first_name || ''} ${order.customer?.last_name || ''}`.trim() || 'Guest Customer',
+      email: order.email || order.customer?.email || 'no-email',
+      phone: order.customer?.phone || order.billing_address?.phone || 'no-phone'
+    };
+
+    // Extract shipping address
+    const shippingAddress = order.shipping_address ? {
+      name: order.shipping_address.name || '',
+      address1: order.shipping_address.address1 || '',
+      address2: order.shipping_address.address2 || '',
+      city: order.shipping_address.city || '',
+      country: order.shipping_address.country || '',
+      phone: order.shipping_address.phone || ''
+    } : null;
+
+    // Extract line items (simplified)
+    const orderItems = order.line_items.map(item => ({
+      sku: item.sku || 'no-sku',
+      title: item.title,
       quantity: item.quantity,
-      price: item.price,
-      title: item.title
+      price: item.price
     }));
 
-    logWebhook(`📦 New order #${orderNumber} received with ${skus.length} items`);
-    logWebhook(`Items: ${JSON.stringify(skus)}`);
+    // Create simple order object
+    const orderDetails = {
+      number: orderNumber,
+      customer,
+      shipping_address: shippingAddress,
+      items: orderItems
+    };
 
-    // Process the order (e.g., update inventory, notify systems)
-    // Add your business logic here
+    logWebhook(`📦 New order #${orderNumber} received from ${customer.name} (${customer.email})`);
+    
+    if (shippingAddress) {
+      logWebhook(`Shipping to: ${shippingAddress.name}, ${shippingAddress.address1}, ${shippingAddress.city}, ${shippingAddress.country}`);
+    }
+
+    console.log('Order details:', JSON.stringify(orderDetails, null, 2));
     
     res.sendStatus(200);
   } catch (error) {
     logWebhook(`❌ Error processing order webhook: ${error.message}`);
-    // Still return 200 to Shopify to prevent retries
+    console.error('Full error:', error);
     res.sendStatus(200);
   }
 };
+
