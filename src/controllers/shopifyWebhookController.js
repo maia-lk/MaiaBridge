@@ -22,7 +22,7 @@ exports.handleOrderCreated = async (req, res) => {
   const order = req.body;
   
   // Log the incoming webhook payload for debugging
-  logWebhook(`Received Shopify webhook: ${JSON.stringify(order, null, 2).substring(0, 500)}...`);
+  logWebhook(`Received Shopify webhook: ${JSON.stringify(order, null, 2)}`);
   
   try {
     // Validate that we received a proper order payload
@@ -77,7 +77,7 @@ exports.handleOrderCreated = async (req, res) => {
       phone: order.shipping_address.phone || ''
     } : null;
 
-    // Extract line items with all available details (with null check)
+    // Extract line items with all available details including real amounts (with null check)
     const orderItemsRaw = (order.line_items && Array.isArray(order.line_items) ? order.line_items : order.items) || [];
     const orderItems = orderItemsRaw.map(item => ({
       id: item.id,
@@ -87,14 +87,35 @@ exports.handleOrderCreated = async (req, res) => {
       variant_title: item.variant_title,
       vendor: item.vendor,
       quantity: item.quantity,
-      price: item.price
+      price: item.price,
+      // Real amount fields from Shopify
+      original_price: item.original_price || item.price,
+      discounted_price: item.discounted_price || item.price,
+      line_price: item.line_price || (parseFloat(item.price || 0) * parseInt(item.quantity || 0)),
+      original_line_price: item.original_line_price || item.line_price,
+      discounted_line_price: item.discounted_line_price || item.line_price,
+      total_discount: item.total_discount || '0.00',
+      discount_allocations: item.discount_allocations || [],
+      // Tax information
+      tax_lines: item.tax_lines || [],
+      taxable: item.taxable || false,
+      // Additional pricing details
+      compare_at_price: item.compare_at_price,
+      fulfillment_service: item.fulfillment_service,
+      gift_card: item.gift_card || false,
+      requires_shipping: item.requires_shipping !== false
     }));
 
-    // Extract shipping lines (with null check)
+    // Extract shipping lines with detailed amounts (with null check)
     const shippingLines = order.shipping_lines && Array.isArray(order.shipping_lines)
       ? order.shipping_lines.map(shipping => ({
           price: shipping.price,
-          title: shipping.title
+          title: shipping.title,
+          code: shipping.code,
+          source: shipping.source,
+          discounted_price: shipping.discounted_price || shipping.price,
+          discount_allocations: shipping.discount_allocations || [],
+          tax_lines: shipping.tax_lines || []
         }))
       : [];
 
@@ -138,7 +159,7 @@ exports.handleOrderCreated = async (req, res) => {
       }
     }
 
-    // Create comprehensive order object with all details from sample
+    // Create comprehensive order object with all real amount details from Shopify
     const orderDetails = {
       id: order.id,
       number: orderNumber,
@@ -148,13 +169,28 @@ exports.handleOrderCreated = async (req, res) => {
       processed_at: order.processed_at,
       currency: order.currency,
       financial_status: order.financial_status,
+      // Main totals
       total_price: order.total_price,
       subtotal_price: order.subtotal_price,
       total_tax: order.total_tax,
       total_discounts: order.total_discounts,
+      total_tip_received: order.total_tip_received || '0.00',
+      // Additional amount details
+      total_line_items_price: order.total_line_items_price || order.subtotal_price,
+      total_line_items_price_set: order.total_line_items_price_set,
+      total_price_set: order.total_price_set,
+      subtotal_price_set: order.subtotal_price_set,
+      total_tax_set: order.total_tax_set,
+      total_discounts_set: order.total_discounts_set,
+      total_shipping_price_set: order.total_shipping_price_set,
+      // Discount information
       discount_percentage: totalDiscountPercentage,
       discount_applications: discountApplications,
       discount_codes: discountCodes,
+      // Tax information
+      tax_lines: order.tax_lines || [],
+      taxes_included: order.taxes_included || false,
+      // Other details
       customer,
       billing_address: billingAddress,
       shipping_address: shippingAddress,
