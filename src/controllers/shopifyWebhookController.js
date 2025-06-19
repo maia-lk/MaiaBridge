@@ -104,6 +104,40 @@ exports.handleOrderCreated = async (req, res) => {
           total + (parseFloat(line.price || '0') || 0), 0).toFixed(2)
       : '0.00';
 
+    // Extract discount information from Shopify order
+    const discountApplications = order.discount_applications || [];
+    const discountCodes = order.discount_codes || [];
+    
+    // Calculate total discount percentage if available
+    let totalDiscountPercentage = 0;
+    let totalDiscountAmount = 0;
+    
+    // Check discount applications for percentage discounts
+    discountApplications.forEach(discount => {
+      if (discount.type === 'percentage') {
+        totalDiscountPercentage += parseFloat(discount.value || 0);
+      }
+      if (discount.target_selection === 'all') {
+        totalDiscountAmount += parseFloat(discount.value || 0);
+      }
+    });
+    
+    // Check discount codes for additional info
+    discountCodes.forEach(discount => {
+      if (discount.type === 'percentage') {
+        totalDiscountPercentage += parseFloat(discount.amount || 0);
+      }
+    });
+    
+    // If no discount found, check if total_discounts field exists
+    if (totalDiscountPercentage === 0 && order.total_discounts) {
+      const totalDiscounts = parseFloat(order.total_discounts || 0);
+      const subtotalPrice = parseFloat(order.subtotal_price || 0);
+      if (subtotalPrice > 0) {
+        totalDiscountPercentage = (totalDiscounts / subtotalPrice) * 100;
+      }
+    }
+
     // Create comprehensive order object with all details from sample
     const orderDetails = {
       id: order.id,
@@ -117,6 +151,10 @@ exports.handleOrderCreated = async (req, res) => {
       total_price: order.total_price,
       subtotal_price: order.subtotal_price,
       total_tax: order.total_tax,
+      total_discounts: order.total_discounts,
+      discount_percentage: totalDiscountPercentage,
+      discount_applications: discountApplications,
+      discount_codes: discountCodes,
       customer,
       billing_address: billingAddress,
       shipping_address: shippingAddress,
