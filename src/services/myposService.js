@@ -25,39 +25,28 @@ function convertOrderToInvoice(orderDetails) {
   const shippingCost = parseFloat(orderDetails.shipping_cost || '0.00');
   const netAmount = grossAmount;
 
-  // Get discount percentage from Shopify order, fallback to 30% if not available
-  const discountPercentage = parseFloat(orderDetails.discount_percentage || 30.0);
-  
-  // Create line items for products with discount from Shopify
-  const productItems = orderDetails.items.map((item, index) => {
-    const sellingPrice = parseFloat(item.price);
-    const quantity = item.quantity;
-    const lineAmount = sellingPrice * quantity;
-    const discountAmount = lineAmount * (discountPercentage / 100);
-    const finalAmount = lineAmount - discountAmount;
-    
-    return {
-      DetailLineNo: index + 1,
-      Salesman: "",
-      ProductCode: item.sku || `ITEM${item.id.toString().padStart(6, '0')}`,
-      StockCode: item.sku || `ITEM${item.id.toString().padStart(6, '0')}`,
-      ProductReferenceCode: "",
-      ProductDescription: item.name || item.title,
-      ProductMeasurementUnit: "",
-      CaseSize: 1,
-      ProductCostPrice: 0.00, // Would need actual cost price from inventory system
-      ProductSellingPrice: sellingPrice,
-      LineDiscontPercentage: discountPercentage,
-      LineDiscountAmount: discountAmount,
-      CaseQuantity: 0,
-      UnitQuantity: quantity,
-      FreeQuantity: 0,
-      Amount: finalAmount,
-      ServiceChargePercentage: 0.00,
-      IsVoucher: 0,
-      DetailLineVoid: 0
-    };
-  });
+  // Create line items for products
+  const productItems = orderDetails.items.map((item, index) => ({
+    DetailLineNo: index + 1,
+    Salesman: "",
+    ProductCode: item.sku || `ITEM${item.id.toString().padStart(6, '0')}`,
+    StockCode: item.sku || `ITEM${item.id.toString().padStart(6, '0')}`,
+    ProductReferenceCode: "",
+    ProductDescription: item.name || item.title,
+    ProductMeasurementUnit: "",
+    CaseSize: 1,
+    ProductCostPrice: 0.00, // Would need actual cost price from inventory system
+    ProductSellingPrice: parseFloat(item.price),
+    LineDiscontPercentage: 0.00,
+    LineDiscountAmount: 0.00,
+    CaseQuantity: 0,
+    UnitQuantity: item.quantity,
+    FreeQuantity: 0,
+    Amount: parseFloat(item.price) * item.quantity,
+    ServiceChargePercentage: 0.00,
+    IsVoucher: 0,
+    DetailLineVoid: 0
+  }));
 
   // Add shipping as a separate line item only if shipping cost is greater than 0
   const invoiceDets = [...productItems];
