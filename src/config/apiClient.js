@@ -20,6 +20,7 @@ const getToken = async () => {
   );
 
   if (response.data.Status === 1) {
+    console.log('Token fetched successfully:', response.data.Data);
     return response.data.Data;
   } else {
     throw new Error(`Token fetch failed: ${response.data.Message}`);

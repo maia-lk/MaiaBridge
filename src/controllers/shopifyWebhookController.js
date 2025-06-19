@@ -21,7 +21,15 @@ function logWebhook(message) {
 exports.handleOrderCreated = async (req, res) => {
   const order = req.body;
   
+  // Log the incoming webhook payload for debugging
+  logWebhook(`Received Shopify webhook: ${JSON.stringify(order, null, 2).substring(0, 500)}...`);
+  
   try {
+    // Validate that we received a proper order payload
+    if (!order) {
+      logWebhook('❌ Error: No order data in webhook payload');
+      return res.sendStatus(200); // Still return success to Shopify
+    }
     // Extract complete order details
     const orderNumber = order.order_number || order.name?.replace('#', '') || 'unknown';
     
@@ -69,11 +77,12 @@ exports.handleOrderCreated = async (req, res) => {
       phone: order.shipping_address.phone || ''
     } : null;
 
-    // Extract line items with all available details
-    const orderItems = order.line_items.map(item => ({
+    // Extract line items with all available details (with null check)
+    const orderItemsRaw = (order.line_items && Array.isArray(order.line_items) ? order.line_items : order.items) || [];
+    const orderItems = orderItemsRaw.map(item => ({
       id: item.id,
       name: item.name,
-      sku: item.sku || 'no-sku',
+      sku: item.sku,
       title: item.title,
       variant_title: item.variant_title,
       vendor: item.vendor,
@@ -81,16 +90,19 @@ exports.handleOrderCreated = async (req, res) => {
       price: item.price
     }));
 
-    // Extract shipping lines
-    const shippingLines = order.shipping_lines ? order.shipping_lines.map(shipping => ({
-      code: shipping.code,
-      price: shipping.price,
-      title: shipping.title
-    })) : [];
+    // Extract shipping lines (with null check)
+    const shippingLines = order.shipping_lines && Array.isArray(order.shipping_lines)
+      ? order.shipping_lines.map(shipping => ({
+          price: shipping.price,
+          title: shipping.title
+        }))
+      : [];
 
-    // Calculate shipping cost total
-    const shippingCost = shippingLines.reduce((total, line) => 
-      total + parseFloat(line.price || 0), 0).toFixed(2);
+    // Calculate shipping cost total (safely)
+    const shippingCost = shippingLines.length > 0
+      ? shippingLines.reduce((total, line) => 
+          total + (parseFloat(line.price || '0') || 0), 0).toFixed(2)
+      : '0.00';
 
     // Create comprehensive order object with all details from sample
     const orderDetails = {
@@ -126,7 +138,7 @@ exports.handleOrderCreated = async (req, res) => {
     // Send order to MyPOS
     logWebhook(`Forwarding order #${orderNumber} to MyPOS...`);
     
-    // const myposResult = await sendTransactionToMyPOS(orderDetails);
+    const myposResult = await sendTransactionToMyPOS(orderDetails);
     
     if (myposResult.success) {
       logWebhook(`✅ Successfully sent order #${orderNumber} to MyPOS`);

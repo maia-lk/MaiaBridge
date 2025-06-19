@@ -1,12 +1,152 @@
-// MaiaBridge Project
-// Copyright (c) 2025 Maia. All rights reserved.
-// This project and its source code are the legal property of Maia.
-// Unauthorized copying or distribution is prohibited.
-
+const fs = require('fs');
+const path = require('path');
 const { callApi } = require('../config/apiClient');
+
+const LOG_FILE = path.join(__dirname, 'mypos-service-log.txt');
+
+function logService(message) {
+  const timestamp = new Date().toISOString();
+  const logMsg = `[${timestamp}] ${message}\n`;
+  fs.appendFileSync(LOG_FILE, logMsg);
+  console.log(logMsg.trim());
+}
+
+/**
+ * Converts Shopify order details to MyPOS invoice format
+ * @param {Object} orderDetails - The processed order details from Shopify webhook
+ * @returns {Object} Formatted MyPOS invoice object
+ */
+function convertOrderToInvoice(orderDetails) {
+  const orderDate = new Date(orderDetails.created_at);
+  const invoiceNumber = `INV${orderDetails.number.padStart(5, '0')}`;
+  const grossAmount = parseFloat(orderDetails.total_price);
+  const shippingCost = parseFloat(orderDetails.shipping_cost || '0.00');
+  const netAmount = grossAmount;
+
+  // Create line items for products
+  const productItems = orderDetails.items.map((item, index) => ({
+    DetailLineNo: index + 1,
+    Salesman: "",
+    ProductCode: item.sku || `ITEM${item.id.toString().padStart(6, '0')}`,
+    StockCode: item.sku || `ITEM${item.id.toString().padStart(6, '0')}`,
+    ProductReferenceCode: "",
+    ProductDescription: item.name || item.title,
+    ProductMeasurementUnit: "",
+    CaseSize: 1,
+    ProductCostPrice: 0.00, // Would need actual cost price from inventory system
+    ProductSellingPrice: parseFloat(item.price),
+    LineDiscontPercentage: 0.00,
+    LineDiscountAmount: 0.00,
+    CaseQuantity: 0,
+    UnitQuantity: item.quantity,
+    FreeQuantity: 0,
+    Amount: parseFloat(item.price) * item.quantity,
+    ServiceChargePercentage: 0.00,
+    IsVoucher: 0,
+    DetailLineVoid: 0
+  }));
+
+  // Add shipping as a separate line item only if shipping cost is greater than 0
+  const invoiceDets = [...productItems];
+  if (shippingCost > 0) {
+    invoiceDets.push({
+      DetailLineNo: productItems.length + 1, // Line numbering after products
+      Salesman: "",
+      ProductCode: "000001570", // Fixed shipping product code
+      StockCode: "000001570", // Fixed shipping stock code
+      ProductReferenceCode: "",
+      ProductDescription: "DELIVERY CHARGES",
+      ProductMeasurementUnit: "",
+      CaseSize: 1,
+      ProductCostPrice: 0.00,
+      ProductSellingPrice: shippingCost,
+      LineDiscontPercentage: 0.00,
+      LineDiscountAmount: 0.00,
+      CaseQuantity: 0,
+      UnitQuantity: 1,
+      FreeQuantity: 0,
+      Amount: shippingCost,
+      ServiceChargePercentage: 0.00,
+      IsVoucher: 0,
+      DetailLineVoid: 0
+    });
+  }
+
+  const invoice = {
+    InvoiceHed: {
+      InvoiceNumber: invoiceNumber,
+      SetupLocation: "001",
+      InnerLocation: "001",
+      StationId: "009",
+      InvoiceDate: orderDate.toISOString(),
+      InvoiceTime: orderDate.toISOString(),
+      InvoiceEndDate: orderDate.toISOString(),
+      InvoiceEndTime: orderDate.toISOString(),
+      CashierId: "USER1",
+      CashierSignOnDate: orderDate.toISOString(),
+      CashierShift: 1,
+      TemporaryCashierId: "",
+      CustomerId: "",
+      GrossAmount: grossAmount,
+      DiscountPercentage: 0.00,
+      DiscountAmount: 0.00,
+      LineDiscountPercentageTotal: 0.00,
+      LineDiscountAmountTotal: 0.00,
+      NetAmount: netAmount,
+      PaidAmount: netAmount,
+      DueAmount: 0.00,
+      ChangeAmount: 0.00,
+      VATAmount: parseFloat(orderDetails.total_tax || '0.00'),
+      NBTAmount: 0.00,
+      InvoiceSlipPrint: 1,
+      InvoiceCancel: 0,
+      InvoiceProcessed: 1,
+      ReferenceTransactionType: "",
+      ReferenceTransactionDocNo: ""
+    },
+    InvoiceRemarks: [{
+      Remark1: `CB${orderDetails.id.toString().padStart(8, '0')}`,
+      Remark2: `Shopify Order #${orderDetails.number}`,
+      Remark3: `Customer: ${orderDetails.customer.name}`,
+      Remark4: `Date: ${orderDate.toLocaleDateString('en-US')}`,
+      Remark5: "Online Payment"
+    }],
+    InvoiceDets: invoiceDets,
+    InvoiceDetailRemarks: '',
+    InvoicePayments: [{
+      PaymentDetSequence: 1,
+      PaymentHedCode: "CSH",
+      PaymentDetCode: "VISA",
+      PaymentReference: `SHOPIFY-${orderDetails.number}`,
+      PayableAmount: netAmount,
+      PaidAmount: netAmount,
+      ForeignCurrencyAmount: 0.00,
+      ForeignCurrencyvsLocalCurrencyRate: 0.00,
+      ForeignCurrencyvsUSDollarRate: 0.00
+    }],
+    DeliveryAddress: {
+      FirstName: orderDetails.shipping_address?.first_name || "",
+      LastName: orderDetails.shipping_address?.last_name || "",
+      Mobile: orderDetails.shipping_address?.phone || orderDetails.customer.phone,
+      Email: orderDetails.customer.email,
+      AddressLine1: orderDetails.shipping_address?.address1 || "",
+      AddressLine2: orderDetails.shipping_address?.address2 || "",
+      AddressLine3: orderDetails.shipping_address?.city || "",
+      AddressLine4: orderDetails.shipping_address?.country || "",
+      CreatedDate: orderDate.toISOString(),
+      CreatedBy: "API_USER",
+      ModifiedDate: orderDate.toISOString(),
+      ModifiedBy: "API_USER"
+    }
+  };
+
+  return invoice;
+}
+
 /**
  * Send invoice to MyPOS - production implementation
  * @param {Object} orderDetails - The order details from Shopify
+ * @returns {Object} Result of the transaction
  */
 async function sendTransactionToMyPOS(orderDetails) {
   try {
@@ -15,140 +155,52 @@ async function sendTransactionToMyPOS(orderDetails) {
     
     // API expects an array of invoices
     const payload = [singleInvoice]; 
-    console.log(`Creating invoice for order #${orderDetails.number}`);
+    logService(`Creating invoice for order #${orderDetails.number}`);
+    logService(`Sending invoice to MyPOS API: ${JSON.stringify(payload, null, 2)}`);
     
-    console.log(`Sending invoice to MyPOS API...`);
     const response = await callApi('saveInvoice', payload);
     
-    console.log('Invoice saved successfully:', response);
-    return { success: true, response };
-  } catch (error) {
-    console.error('Error saving invoice:', error.message);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Converts a Shopify order to MyPOS invoice format
- */
-function convertOrderToInvoice(orderDetails) {
-  // Generate invoice number based on order number
-  const newInvoiceNumber = `INV${orderDetails.number}`;
-  const nowDate = new Date().toISOString();
-  
-  // Calculate total price
-  const totalPrice = orderDetails.items.reduce((total, item) => {
-    return total + (parseFloat(item.price) * parseInt(item.quantity));
-  }, 0);
-
-  // Customer information
-  const customer = orderDetails.customer || {};
-  const shippingAddress = orderDetails.shipping_address || {};
-  const customerPhone = customer.phone || shippingAddress.phone || '';
-  
-  // Build the invoice object structure
-  const singleInvoice = {
-    InvoiceHed: {
-      InvoiceNumber: newInvoiceNumber,
-      SetupLocation: '001',
-      InnerLocation: '001',
-      StationId: '009',
-      InvoiceDate: nowDate,
-      InvoiceTime: nowDate,
-      InvoiceEndDate: nowDate,
-      InvoiceEndTime: nowDate,
-      CashierId: 'USER1',
-      CashierSignOnDate: nowDate,
-      CashierShift: 1,
-      TemporaryCashierId: '',
-      CustomerId: customerPhone,
-      // The following amounts refer to the entire order totals:
-      GrossAmount: totalPrice,
-      DiscountPercentage: 0.0,
-      DiscountAmount: 0.0,
-      LineDiscountPercentageTotal: 0.0,
-      LineDiscountAmountTotal: 0.0,
-      NetAmount: totalPrice,
-      PaidAmount: totalPrice,
-      DueAmount: 0.0,
-      ChangeAmount: 0.0,
-      VATAmount: 0.0,
-      NBTAmount: 0.0,
-      InvoiceSlipPrint: 1,
-      InvoiceCancel: 0,
-      InvoiceProcessed: 1,
-      ReferenceTransactionType: 'SHOPIFY',
-      ReferenceTransactionDocNo: orderDetails.number.toString()
-    },
-    InvoiceRemarks: [
-      {
-        Remark1: 'CB81201292',
-        Remark2: `Shopify Order #${orderDetails.number}`,
-        Remark3: `Customer: ${customer.name || 'N/A'}`,
-        Remark4: `Date: ${new Date().toLocaleDateString()}`,
-        Remark5: 'Online Payment'
-      }
-    ],
-    InvoiceDets: orderDetails.items.map((item, index) => {
-      const lineQuantity = parseInt(item.quantity);
-      const lineSellingPrice = parseFloat(item.price);
-      
-      return {
-        DetailLineNo: index + 1,
-        Salesman: '',
-        ProductCode: item.sku,
-        StockCode: item.sku,
-        ProductReferenceCode: '',
-        ProductDescription: item.title || `Product ${item.sku}`,
-        ProductMeasurementUnit: '',
-        CaseSize: 1,
-        ProductCostPrice: lineSellingPrice * 0.6, // Estimate cost as 60% of selling price if not provided
-        ProductSellingPrice: lineSellingPrice,
-        LineDiscontPercentage: 0.0,
-        LineDiscountAmount: 0.0,
-        CaseQuantity: 0,
-        UnitQuantity: lineQuantity,
-        FreeQuantity: 0,
-        Amount: lineSellingPrice * lineQuantity,
-        ServiceChargePercentage: 0.0,
-        IsVoucher: 0,
-        DetailLineVoid: 0
-      };
-    }),
-    InvoiceDetailRemarks: orderDetails.items.map((item, index) => ({
-      DetailLineNo: (index + 1).toString(),
-      Remark: `Shopify Item: ${item.title || item.sku}`
-    })),
-    InvoicePayments: [
-      {
-        PaymentDetSequence: 1,
-        PaymentHedCode: 'CRC', // Credit Card instead of Cash
-        PaymentDetCode: 'VISA', // Using VISA as default
-        PaymentReference: `SHOPIFY-${orderDetails.number}`,
-        PayableAmount: totalPrice,
-        PaidAmount: totalPrice,
-        ForeignCurrencyAmount: 0.0,
-        ForeignCurrencyvsLocalCurrencyRate: 0.0,
-        ForeignCurrencyvsUSDollarRate: 0.0
-      }
-    ],
-    DeliveryAddress: {
-      FirstName: (shippingAddress.name || customer.name || '').split(' ')[0] || '',
-      LastName: (shippingAddress.name || customer.name || '').split(' ').slice(1).join(' ') || '',
-      Mobile: customerPhone.startsWith('94') ? customerPhone : `94${customerPhone.replace(/^0+/, '')}`,
-      Email: customer.email || '',
-      AddressLine1: shippingAddress.address1 || '',
-      AddressLine2: shippingAddress.address2 || '',
-      AddressLine3: shippingAddress.city || '',
-      AddressLine4: shippingAddress.country || '',
-      CreatedDate: nowDate,
-      CreatedBy: 'API_USER',
-      ModifiedDate: nowDate,
-      ModifiedBy: 'API_USER'
+    // Validate API response
+    if (!response || typeof response !== 'object') {
+      throw new Error('Invalid MyPOS API response');
     }
-  };
 
-  return singleInvoice;
+    const { Status, Message, Data, Exception } = response;
+
+    // Log full response for debugging
+    logService(`MyPOS API response for order #${orderDetails.number}: ${JSON.stringify(response, null, 2)}`);
+
+    if (Status === 1) {
+      logService(`Invoice ${Data?.[0] || 'unknown'} saved successfully for order #${orderDetails.number}`);
+      return {
+        success: true,
+        status: Status,
+        message: Message,
+        invoiceNumber: Data?.[0] || null,
+        response
+      };
+    } else {
+      const errorMsg = Exception || Message || 'Unknown error occurred';
+      logService(`Failed to save invoice for order #${orderDetails.number}: ${errorMsg}`);
+      return {
+        success: false,
+        status: Status,
+        message: errorMsg,
+        invoiceNumber: null,
+        response
+      };
+    }
+  } catch (error) {
+    logService(`Error saving invoice for order #${orderDetails.number}: ${error.message}`);
+    console.error('Full error:', error);
+    return {
+      success: false,
+      status: null,
+      message: error.message,
+      invoiceNumber: null,
+      error: error.message
+    };
+  }
 }
 
 module.exports = {
