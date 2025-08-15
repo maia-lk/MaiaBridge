@@ -58,7 +58,7 @@ All endpoints are prefixed with `/shopify` unless otherwise noted.
 ## Getting Started
 
 ### Prerequisites
-- Node.js v14+
+- Node.js v20+
 - npm
 - Shopify API credentials
 - MyPOS API/data access
