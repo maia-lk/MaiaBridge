@@ -75,8 +75,8 @@ function convertOrderToInvoice(orderDetails) {
   const invoice = {
     InvoiceHed: {
       InvoiceNumber: invoiceNumber,
-      SetupLocation: "001",
-      InnerLocation: "001",
+      SetupLocation: "003",
+      InnerLocation: "003",
       StationId: "009",
       InvoiceDate: orderDate.toISOString(),
       InvoiceTime: orderDate.toISOString(),
