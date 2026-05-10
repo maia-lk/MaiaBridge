@@ -9,6 +9,7 @@ const shopifRoutes = require('./src/routes/shopifRoutes');
 const myposRoutes = require('./src/routes/myposRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const shopifyWebhookRoutes = require('./src/routes/shopifyWebhookRoutes');
+const { startRetryJob } = require('./src/services/queueRetryJob');
 
 dotenv.config();
 const app = express();
@@ -23,4 +24,5 @@ app.use('/shopify-webhook', shopifyWebhookRoutes);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  startRetryJob();
 });
