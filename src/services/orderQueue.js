@@ -1,98 +1,73 @@
 // MaiaBridge Project
 // Failed order queue — persists orders that couldn't reach MyPOS.
-// Stored as a JSON file on disk (no DB needed).
+// Backed by Firestore so the queue and dedup list survive process restarts
+// (the previous file-based version lost orders when the host wiped its disk).
+//
+// Collections:
+//   queue  — pending orders waiting for MyPOS. Doc id = Shopify order id.
+//   sent   — dedup record of orders already delivered. Doc id = Shopify order id.
 
-const fs = require('fs');
-const path = require('path');
+const { db } = require('../config/firebase');
 
-const QUEUE_DIR = path.join(__dirname, '..', '..', 'queue');
-const QUEUE_FILE = path.join(QUEUE_DIR, 'failed-orders.json');
-const SENT_FILE = path.join(QUEUE_DIR, 'sent-invoices.json');
-const LOG_FILE = path.join(QUEUE_DIR, 'queue-log.txt');
-
-function ensureQueueDir() {
-  if (!fs.existsSync(QUEUE_DIR)) fs.mkdirSync(QUEUE_DIR, { recursive: true });
-}
+const QUEUE_COL = 'queue';
+const SENT_COL = 'sent';
 
 function logQueue(message) {
-  ensureQueueDir();
   const timestamp = new Date().toISOString();
-  const line = `[${timestamp}] ${message}\n`;
-  fs.appendFileSync(LOG_FILE, line);
-  console.log(line.trim());
+  console.log(`[${timestamp}] ${message}`);
 }
 
-function readJson(file, fallback) {
-  try {
-    if (!fs.existsSync(file)) return fallback;
-    const raw = fs.readFileSync(file, 'utf8');
-    return raw ? JSON.parse(raw) : fallback;
-  } catch (err) {
-    logQueue(`Failed to read ${path.basename(file)}: ${err.message}`);
-    return fallback;
-  }
+// Firestore doc ids must be strings.
+function docId(orderId) {
+  return String(orderId);
 }
 
-function writeJson(file, data) {
-  ensureQueueDir();
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+async function loadQueue() {
+  const snap = await db.collection(QUEUE_COL).get();
+  return snap.docs.map(doc => doc.data());
 }
 
-function loadQueue() {
-  return readJson(QUEUE_FILE, []);
+async function markSent(orderId) {
+  await db.collection(SENT_COL).doc(docId(orderId)).set({
+    orderId,
+    sentAt: new Date().toISOString()
+  });
 }
 
-function saveQueue(queue) {
-  writeJson(QUEUE_FILE, queue);
+async function isAlreadySent(orderId) {
+  const doc = await db.collection(SENT_COL).doc(docId(orderId)).get();
+  return doc.exists;
 }
 
-function loadSent() {
-  return readJson(SENT_FILE, []);
-}
-
-function markSent(orderId) {
-  const sent = loadSent();
-  if (!sent.includes(orderId)) {
-    sent.push(orderId);
-    // keep last 5000 to avoid unbounded growth
-    const trimmed = sent.slice(-5000);
-    writeJson(SENT_FILE, trimmed);
-  }
-}
-
-function isAlreadySent(orderId) {
-  return loadSent().includes(orderId);
-}
-
-function enqueueOrder(orderDetails, reason) {
-  const queue = loadQueue();
-  if (queue.some(item => item.orderDetails.id === orderDetails.id)) {
+async function enqueueOrder(orderDetails, reason) {
+  const ref = db.collection(QUEUE_COL).doc(docId(orderDetails.id));
+  const existing = await ref.get();
+  if (existing.exists) {
     logQueue(`Order #${orderDetails.number} already in queue, skipping enqueue`);
     return;
   }
-  queue.push({
+  await ref.set({
     queuedAt: new Date().toISOString(),
     attempts: 0,
     reason: reason || 'MyPOS unavailable',
     orderDetails
   });
-  saveQueue(queue);
-  logQueue(`Enqueued order #${orderDetails.number} (queue size: ${queue.length})`);
+  logQueue(`Enqueued order #${orderDetails.number}`);
 }
 
-function removeFromQueue(orderId) {
-  const queue = loadQueue();
-  const filtered = queue.filter(item => item.orderDetails.id !== orderId);
-  saveQueue(filtered);
+async function removeFromQueue(orderId) {
+  await db.collection(QUEUE_COL).doc(docId(orderId)).delete();
 }
 
-function incrementAttempt(orderId) {
-  const queue = loadQueue();
-  const item = queue.find(i => i.orderDetails.id === orderId);
-  if (item) {
-    item.attempts = (item.attempts || 0) + 1;
-    item.lastAttemptAt = new Date().toISOString();
-    saveQueue(queue);
+async function incrementAttempt(orderId) {
+  const ref = db.collection(QUEUE_COL).doc(docId(orderId));
+  const doc = await ref.get();
+  if (doc.exists) {
+    const data = doc.data();
+    await ref.update({
+      attempts: (data.attempts || 0) + 1,
+      lastAttemptAt: new Date().toISOString()
+    });
   }
 }
 

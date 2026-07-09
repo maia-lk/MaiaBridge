@@ -186,7 +186,7 @@ exports.handleOrderCreated = async (req, res) => {
 
     
     // Skip if already sent (duplicate webhook)
-    if (isAlreadySent(orderDetails.id)) {
+    if (await isAlreadySent(orderDetails.id)) {
       logWebhook(`⚠️  Order #${orderNumber} already sent to MyPOS previously, skipping duplicate`);
       return res.sendStatus(200);
     }
@@ -194,7 +194,7 @@ exports.handleOrderCreated = async (req, res) => {
     // If outside working hours, queue immediately without trying MyPOS
     if (!isWithinWorkingHours()) {
       logWebhook(`🌙 Outside MyPOS working hours — queueing order #${orderNumber} for next opening`);
-      enqueueOrder(orderDetails, 'Outside MyPOS working hours');
+      await enqueueOrder(orderDetails, 'Outside MyPOS working hours');
       return res.sendStatus(200);
     }
 
@@ -203,11 +203,11 @@ exports.handleOrderCreated = async (req, res) => {
     const myposResult = await sendTransactionToMyPOS(orderDetails);
 
     if (myposResult.success) {
-      markSent(orderDetails.id);
+      await markSent(orderDetails.id);
       logWebhook(`✅ Successfully sent order #${orderNumber} to MyPOS`);
     } else {
       logWebhook(`❌ Failed to send order #${orderNumber} to MyPOS: ${myposResult.message || myposResult.error} — queueing for retry`);
-      enqueueOrder(orderDetails, myposResult.message || myposResult.error || 'Unknown error');
+      await enqueueOrder(orderDetails, myposResult.message || myposResult.error || 'Unknown error');
     }
     
     // Always return 200 to Shopify

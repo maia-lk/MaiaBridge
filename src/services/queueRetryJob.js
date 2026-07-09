@@ -25,7 +25,7 @@ async function flushQueue() {
       return;
     }
 
-    const queue = loadQueue();
+    const queue = await loadQueue();
     if (queue.length === 0) return;
 
     logQueue(`Working hours active — attempting to flush ${queue.length} queued order(s)`);
@@ -34,18 +34,18 @@ async function flushQueue() {
       const { orderDetails } = item;
       const orderNumber = orderDetails.number || orderDetails.id;
 
-      if (isAlreadySent(orderDetails.id)) {
+      if (await isAlreadySent(orderDetails.id)) {
         logQueue(`Order #${orderNumber} already marked sent, removing from queue`);
-        removeFromQueue(orderDetails.id);
+        await removeFromQueue(orderDetails.id);
         continue;
       }
 
-      incrementAttempt(orderDetails.id);
+      await incrementAttempt(orderDetails.id);
       const result = await sendTransactionToMyPOS(orderDetails);
 
       if (result.success) {
-        markSent(orderDetails.id);
-        removeFromQueue(orderDetails.id);
+        await markSent(orderDetails.id);
+        await removeFromQueue(orderDetails.id);
         logQueue(`✅ Flushed order #${orderNumber} to MyPOS`);
       } else {
         logQueue(`⏳ Order #${orderNumber} still failing (${result.message || result.error}) — keeping in queue`);
